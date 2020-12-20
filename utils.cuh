@@ -42,20 +42,22 @@ __device__ __host__ float3 nanf3() {
 /**
 * Read data from a file
 */
-void read_data(std::string path, float *e, float *dqe, float *sigm) {
+void read_data(std::string path, float *e, float *dqe, float *nuAir, float *nuIron) {
     std::ifstream infile(path);
-    float e_, dqe_, sigm_;
+    float e_, dqe_, nuAir_, nuIron_;
     int N;
     infile >> N;
     e = new float[N];
     dqe = new float[N];
-    sigm = new float[N];
+    nuAir = new float[N];
+    nuIron = new float[N];
     int i = 0;
-    while (infile >> e_ >> dqe_ >> sigm_) {
-        printf("%f %f %f\n", e_, dqe_, sigm_);
+    while (infile >> e_ >> dqe_ >> nuAir_ >> nuIron_) {
+        // printf("%f %f %f %f\n", e_, dqe_, nuAir_, nuIron_);
         e[i] = e_;
         dqe[i] = dqe_;
-        sigm[i] = sigm_;
+        nuAir[i] = nuAir_;
+        nuIron[i] = nuIron_;
         i++;
     }
 }

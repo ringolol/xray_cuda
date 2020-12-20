@@ -10,7 +10,7 @@
 */
 struct Plane {
     float3 normal;
-    float3 *points;
+    float3 points[3];
 
     __host__ void init(float3 p0, float3 p1, float3 p2) {
         // p0 must be a central point!
@@ -20,7 +20,7 @@ struct Plane {
         //    |          |
         // p2 *----------o
 
-        gpuErrchk( cudaMallocManaged(&points, 3*sizeof(float3)) );
+        // cudaMallocManaged(&points, 3*sizeof(float3));
         points[0] = p0;
         points[1] = p1;
         points[2] = p2;
@@ -29,6 +29,16 @@ struct Plane {
         // https://en.wikipedia.org/wiki/Plane_(geometry)#Method_3
         normal = (points[1] - points[0]) % (points[2] - points[0]);
     }
+
+    #ifdef __CUDA_ARCH__
+        __device__ ~Plane() {
+            delete[] points;
+        }
+    #else
+        __host__ ~Plane() {
+            cudaFree(points);
+        }
+    #endif
 };
 
 /**
@@ -43,9 +53,9 @@ struct Block {
         // consists of
         material = material_;
 
-        float3 *points;
-        gpuErrchk( cudaMallocManaged(&points, 7*sizeof(float3)) );
-        gpuErrchk( cudaMallocManaged(&planes, 6*sizeof(Plane)) );
+        float3 points[7];
+        // gpuErrchk( cudaMallocManaged(&points, 7*sizeof(float3)) );
+        cudaMallocManaged(&planes, 6*sizeof(Plane));
         // main points
         points[0] = points_[0];
         points[1] = points_[1];
@@ -64,6 +74,17 @@ struct Block {
         planes[4].init(points[2], points[5], points[6]);
         planes[5].init(points[1], points[4], points[6]);
     }
+
+    #ifdef __CUDA_ARCH__
+        __device__ ~Block() {
+            delete[] planes;
+        }
+    #else
+        __host__ ~Block() {
+            cudaFree(planes);
+        }
+    #endif
+    
 };
 
 #endif

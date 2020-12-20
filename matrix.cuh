@@ -13,9 +13,9 @@ struct Matrix {
         width = w;
         height = h;
         density = d;
-        gpuErrchk( cudaMallocManaged(&cells, width*sizeof(float3*)) );
+        cudaMallocManaged(&cells, width*sizeof(float3*));
         for(int i = 0; i < width; i++) {
-            gpuErrchk( cudaMallocManaged(&cells[i], height*sizeof(float3*)) );
+            cudaMallocManaged(&cells[i], height*sizeof(float3*));
         }
         
         for (int i = 0; i < width; i++) {
