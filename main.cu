@@ -56,19 +56,20 @@ int main() {
     cudaMallocManaged(&block6_points, 4*sizeof(float3));
 
     // init blocks
-    float p_hsize = 4.5; //4.5 (edge case)
+    float p_hsize = 70; //4.5 (edge case)
     float p_z = -35;
     float p1_thicc = 2, p2_thicc = 2;
     float hole_size = 1;
     float hh = hole_size/2;
-    // init first block
+
+    // first layer
     block1_points[0] = make_float3(-p_hsize, -p_hsize, p_z);
     block1_points[1] = make_float3( p_hsize, -p_hsize, p_z);
     block1_points[2] = make_float3(-p_hsize,  p_hsize, p_z);
     block1_points[3] = make_float3(-p_hsize, -p_hsize, p_z-p1_thicc);
     blocks[0].init(block1_points, iron);
 
-
+    // second layer with the hole
     block2_points[0] = make_float3(-p_hsize, -p_hsize, p_z-p1_thicc);
     block2_points[1] = make_float3(-hh,      -p_hsize, p_z-p1_thicc);
     block2_points[2] = make_float3(-p_hsize, p_hsize,  p_z-p1_thicc);
@@ -93,7 +94,7 @@ int main() {
     block5_points[3] = make_float3(-hh, hh,      p_z-p1_thicc-hole_size);
     blocks[4].init(block5_points, iron);
 
-
+    // third layer
     block6_points[0] = make_float3(-p_hsize, -p_hsize, p_z-p1_thicc-hole_size);
     block6_points[1] = make_float3( p_hsize, -p_hsize, p_z-p1_thicc-hole_size);
     block6_points[2] = make_float3(-p_hsize,  p_hsize, p_z-p1_thicc-hole_size);
