@@ -59,5 +59,21 @@ __device__ __host__ bool operator!=(float3 a, const float3& b) {
     return !(a == b);
 }
 
+__device__ __host__ void print_float3(float3 val, const char* str = "val") {
+    printf("%s = (%f, %f, %f)\n", str, val.x, val.y, val.z);
+}
+
+__device__ __host__ float norm2(float3 a) {
+    return sqrtf(SQR(a.x) + SQR(a.y) + SQR(a.z));
+}
+
+__device__ __host__ float f3_dist(float3 a, float3 b) {
+    return norm2(a-b);
+}
+
+__device__ __host__ float3 nanf3() {
+    return float3(make_float3(nanf(""), nanf(""), nanf("")));
+}
+
 #endif
 

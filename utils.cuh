@@ -27,18 +27,6 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
    }
 }
 
-__device__ __host__ void print_float3(float3 val, const char* str = "val") {
-    printf("%s = (%f, %f, %f)\n", str, val.x, val.y, val.z);
-}
-
-__device__ __host__ float f3_dist(float3 a, float3 b) {
-    return sqrtf(SQR(a.x-b.x) + SQR(a.y-b.y) + SQR(a.z-b.z));
-}
-
-__device__ __host__ float3 nanf3() {
-    return float3(make_float3(nanf(""), nanf(""), nanf("")));
-}
-
 /**
 * Read data from a file
 */

@@ -8,14 +8,17 @@ struct Matrix {
     int width, height;
     float density;
     float3 **cells;
+    float **image;
 
-    __host__ void init(int w, int h, float d) {
+    __host__ void init(int w, int h, float d, float z) {
         width = w;
         height = h;
         density = d;
         cudaMallocManaged(&cells, width*sizeof(float3*));
+        cudaMallocManaged(&image, width*sizeof(float*));
         for(int i = 0; i < width; i++) {
-            cudaMallocManaged(&cells[i], height*sizeof(float3*));
+            cudaMallocManaged(&cells[i], height*sizeof(float3));
+            cudaMallocManaged(&image[i], height*sizeof(float));
         }
         
         for (int i = 0; i < width; i++) {
@@ -23,7 +26,7 @@ struct Matrix {
                 cells[i][j] = make_float3(
                     density * (i - width/2 + 0.5), 
                     density * (j - height/2 + 0.5), 
-                    -90
+                    z
                 );
             }
         }

@@ -1,5 +1,5 @@
 /**
-* The CUDA x-ray demo program which calculates x-ray image.
+* The CUDA x-ray demo program which calculates an x-ray image.
 *
 * @author  Valeriy Lyubich
 * @version 0.1
@@ -16,77 +16,25 @@
 #include "beam.cuh"
 #include "block.cuh"
 #include "f3_overload.cuh"
+#include "xray_calc.cuh"
 
 
-/**
-* Intersect a beam and a plane
+/*
+    CUDA commands.
+
+    build:
+        nvcc -o ./build/app.exe ./main.cu -arch=sm_61
+    run:
+        nvprof ./build/app.exe
+    memory check (build with flags -G and -g):
+        cuda-memcheck .\build\app.exe |more
 */
-__device__ float3 intersect_plane(Plane plane, Beam beam) {
-    float d = (plane.points[0] - beam.l0) * plane.normal / (beam.l * plane.normal);
-    float3 p = beam.l0 + beam.l*d;
-    
-    float aa = (plane.points[1] - plane.points[0])*(plane.points[1] - plane.points[0]);
-    float ap = (plane.points[1] - plane.points[0])*(p - plane.points[0]);
-    if(ap <= aa && ap >= 0) {
-        float bb = (plane.points[2] - plane.points[0])*(plane.points[2] - plane.points[0]);
-        float bp = (plane.points[2] - plane.points[0])*(p - plane.points[0]);
-        if(bp <= bb && bp >= 0) {
-            return p;
-        }
-    }
-    
-    return nanf3();
-}
-
-/**
-* Find all intersections between a beam and blocks
-*/
-__device__ void intersect(Block* blocks, int blocks_num, Beam beam) {
-    float *lens = new float[blocks_num];
-
-    for(int i = 0; i < blocks_num; i++) {
-        int ic = 0;
-        float3 inters[2] = {nanf3(), nanf3()};
-        for(int j = 0; j < 6; j++) {
-            float3 inter =  intersect_plane(blocks[i].planes[j], beam);
-            
-            if(!isnan(inter.x)) {
-                inters[ic] = inter;
-                ic++;
-                if(ic == 2) break;
-            }
-        }
-        float d = 0.0;
-        if(!isnan(inters[0].x) && !isnan(inters[1].x) ) {
-            d = f3_dist(inters[0], inters[1]);
-        } else {
-            d = 0.0;
-        }
-        lens[i] = d;
-
-        // printf("LEN{beam[%d][%d]/block[%i]} = %f\n", beam.inx.x, beam.inx.y, i, lens[i]);
-    }
-    delete[] lens;
-}
-
-/**
-* Calcualte resulting x-ray image on the detector's matrix
-*/ 
-__global__ void calc_xray_image(float3 source, Block* blocks, int blocks_num, Matrix* matrix) {
-    int idX = threadIdx.x+blockDim.x*blockIdx.x;
-    int idY = threadIdx.y+blockDim.y*blockIdx.y;
-    if(idX < matrix->width && idY < matrix->height) {
-        float3 cell = matrix->cells[idX][idY];
-        Beam beam(source, cell, make_int2(idX, idY));
-        intersect(blocks, blocks_num, beam);
-    }
-}
 
 
 int main() {
     // load data
-    // float *E=nullptr, *DQE=nullptr, *nuAir=nullptr, *nuIron=nullptr;
-    // read_data("./data.txt", E, DQE, nuAir, nuIron);
+    float *E=nullptr, *DQE=nullptr, *nuAir=nullptr, *nuIron=nullptr;
+    read_data("./data.txt", E, DQE, nuAir, nuIron);
 
     // x-ray source
     float3 source = make_float3(0.0, 0.0, 0.0);
@@ -96,35 +44,67 @@ int main() {
     Matrix* matrix;
 
     // allocate memorry in managed memory
-    int blocks_num = 2;
+    int blocks_num = 6;
     cudaMallocManaged(&blocks, blocks_num*sizeof(Block));
     cudaMallocManaged(&matrix, 1*sizeof(Matrix));
-    float3 *block1_points, *block2_points;
+    float3 *block1_points, *block2_points, *block3_points, *block4_points, *block5_points, *block6_points;
     cudaMallocManaged(&block1_points, 4*sizeof(float3));
     cudaMallocManaged(&block2_points, 4*sizeof(float3));
+    cudaMallocManaged(&block3_points, 4*sizeof(float3));
+    cudaMallocManaged(&block4_points, 4*sizeof(float3));
+    cudaMallocManaged(&block5_points, 4*sizeof(float3));
+    cudaMallocManaged(&block6_points, 4*sizeof(float3));
 
     // init blocks
-    float p_hsize = 10; //4.5 (edge case)
-    float p_z = -40;
-    float p_thicc = 5;
+    float p_hsize = 4.5; //4.5 (edge case)
+    float p_z = -35;
+    float p1_thicc = 2, p2_thicc = 2;
+    float hole_size = 1;
+    float hh = hole_size/2;
     // init first block
     block1_points[0] = make_float3(-p_hsize, -p_hsize, p_z);
     block1_points[1] = make_float3( p_hsize, -p_hsize, p_z);
     block1_points[2] = make_float3(-p_hsize,  p_hsize, p_z);
-    block1_points[3] = make_float3(-p_hsize, -p_hsize, p_z - p_thicc);
+    block1_points[3] = make_float3(-p_hsize, -p_hsize, p_z-p1_thicc);
     blocks[0].init(block1_points, iron);
-    // init second block
-    block2_points[0] = make_float3(-p_hsize, -p_hsize, p_z - p_thicc);
-    block2_points[1] = make_float3( p_hsize, -p_hsize, p_z - p_thicc);
-    block2_points[2] = make_float3(-p_hsize,  0,       p_z - p_thicc);
-    block2_points[3] = make_float3(-p_hsize, -p_hsize, p_z - 2*p_thicc);
+
+
+    block2_points[0] = make_float3(-p_hsize, -p_hsize, p_z-p1_thicc);
+    block2_points[1] = make_float3(-hh,      -p_hsize, p_z-p1_thicc);
+    block2_points[2] = make_float3(-p_hsize, p_hsize,  p_z-p1_thicc);
+    block2_points[3] = make_float3(-p_hsize, -p_hsize, p_z-p1_thicc-hole_size);
     blocks[1].init(block2_points, iron);
+
+    block3_points[0] = make_float3(hh,      -p_hsize, p_z-p1_thicc);
+    block3_points[1] = make_float3(p_hsize, -p_hsize, p_z-p1_thicc);
+    block3_points[2] = make_float3(hh,      p_hsize,  p_z-p1_thicc);
+    block3_points[3] = make_float3(hh,      -p_hsize, p_z-p1_thicc-hole_size);
+    blocks[2].init(block3_points, iron);
+
+    block4_points[0] = make_float3(-hh, -p_hsize, p_z-p1_thicc);
+    block4_points[1] = make_float3(hh,  -p_hsize, p_z-p1_thicc);
+    block4_points[2] = make_float3(-hh, -hh,      p_z-p1_thicc);
+    block4_points[3] = make_float3(-hh, -p_hsize, p_z-p1_thicc-hole_size);
+    blocks[3].init(block4_points, iron);
+
+    block5_points[0] = make_float3(-hh, hh,      p_z-p1_thicc);
+    block5_points[1] = make_float3(hh,  hh,      p_z-p1_thicc);
+    block5_points[2] = make_float3(-hh, p_hsize, p_z-p1_thicc);
+    block5_points[3] = make_float3(-hh, hh,      p_z-p1_thicc-hole_size);
+    blocks[4].init(block5_points, iron);
+
+
+    block6_points[0] = make_float3(-p_hsize, -p_hsize, p_z-p1_thicc-hole_size);
+    block6_points[1] = make_float3( p_hsize, -p_hsize, p_z-p1_thicc-hole_size);
+    block6_points[2] = make_float3(-p_hsize,  p_hsize, p_z-p1_thicc-hole_size);
+    block6_points[3] = make_float3(-p_hsize, -p_hsize, p_z-p1_thicc-hole_size-p2_thicc);
+    blocks[5].init(block6_points, iron);
 
     // init matrix
     float matrix_width = 40;
     int matrix_width_px = 1024;
     int matrix_height_px = 1024;
-    matrix->init(matrix_width_px, matrix_height_px, matrix_width_px/matrix_width);
+    matrix->init(matrix_width_px, matrix_height_px, matrix_width/matrix_width_px, -90.0);
     printf("matrix size: %dx%d\n", matrix->width, matrix->height);
 
     // start x-ray image calculation
@@ -134,12 +114,24 @@ int main() {
     int blocks_height = ceil((float)matrix_height_px/threads_size);
     dim3 blocksShape(blocks_width, blocks_height);
 
-    float *lens;
-    cudaMallocManaged(&lens, blocks_num*sizeof(float));
-
+    // run kernel to calculate x-ray image
     calc_xray_image<<<blocksShape, threadsPerBlock>>>(source, blocks, blocks_num, matrix);
+
     // wait for all threads and blocks
     cudaDeviceSynchronize();
+
+    std::ofstream outdata("output.txt");
+    for(int i = 0; i < matrix->width; i++) {
+        for(int j = 0; j < matrix->height; j++) {
+            outdata << matrix->image[i][j];
+            if(j != matrix->height-1)
+                outdata << '\t';
+        }
+        if(i != matrix->width-1)
+            outdata << '\n';
+    }
+    outdata.close();
+
     // print errors
     gpuErrchk( cudaPeekAtLastError() );
 
