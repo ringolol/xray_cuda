@@ -1,11 +1,3 @@
-/**
-* The CUDA x-ray demo program which calculates an x-ray image.
-*
-* @author  Valeriy Lyubich
-* @version 0.1
-* @since   2020-12-18
-*/
-
 #include <math.h>
 #include <iostream>
 #include <vector>
@@ -20,27 +12,10 @@
 #include "xray_calc.cuh"
 #include "settings.cuh"
 
-
-/*
-    CUDA commands.
-
-    build:
-        nvcc -o ./build/app.exe ./main.cu -arch=sm_61
-        nvcc -o ./dll/cudaXray.dll --shared ./xray_imager.cu -arch=sm_61
-    run:
-        nvprof ./build/app.exe
-        ./build/app.exe
-    memory check (build with flags -G and -g):
-        cuda-memcheck .\build\app.exe |more
-*/
+#include "xray_imager.h"
 
 
-int main() {
-    // emulate input
-    TubeType tube_type = Be_50;
-    float volatage = 100.0;
-    float power = 1;
-    
+float** xray_image(TubeType tube_type, float volatage, float power, float hole_size, float p1_thicc, float p2_thicc) {
     Settings *settings;
     cudaMallocManaged(&settings, 1*sizeof(Settings));
     // load common data
@@ -48,13 +23,13 @@ int main() {
 
     // load materials' data
     std::vector<float> energy_vec, mean_path_vec;
-    read_data("./data/materials/G_Fe.txt", energy_vec, mean_path_vec);
+    read_data("D:/Proj_One/GitSeparate/xray_cuda/data/materials/G_Fe.txt", energy_vec, mean_path_vec);
     float *Fe_x;
     cudaMallocManaged(&Fe_x, mean_path_vec.size()*sizeof(float));
     copy(mean_path_vec.begin(), mean_path_vec.end(), Fe_x);
     // interpolate mean path for Fe
     int k = 0;
-    for(int i = 0; i < 100; i++) {
+    for(int i = 0; i < volatage; i++) {
         while(settings->energy[i] >= energy_vec[k]) {
             k++;
         }
@@ -84,8 +59,6 @@ int main() {
     // init blocks
     float p_hsize = 70; //4.5 (edge case)
     float p_z = -35;
-    float p1_thicc = 2, p2_thicc = 2;
-    float hole_size = 1;
     float hh = hole_size/2;
 
     // first layer
@@ -128,7 +101,7 @@ int main() {
     blocks[5].init(block6_points, iron, Fe_x);
 
     // init matrix
-    float matrix_width = 40;
+    float matrix_width = 20;
     int matrix_width_px = 1024;
     int matrix_height_px = 1024;
     matrix->init(matrix_width_px, matrix_height_px, matrix_width/matrix_width_px, -90.0);
@@ -147,6 +120,7 @@ int main() {
     // wait for all threads and blocks
     cudaDeviceSynchronize();
 
+    // store matrix as output.txt
     std::ofstream outdata("output.txt");
     for(int i = 0; i < matrix->width; i++) {
         for(int j = 0; j < matrix->height; j++) {
@@ -164,10 +138,11 @@ int main() {
 
     // free allocated memory
     cudaFree(blocks);
-    cudaFree(matrix);
     cudaFree(block1_points);
     cudaFree(block2_points);
+    // cudaFree(matrix);
 
     cudaProfilerStop();
-    return 0;
+
+    return matrix->image;
 }

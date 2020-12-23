@@ -5,22 +5,12 @@
 #include <fstream>
 #include <vector>
 
+#include "types.h"
+
 
 #define FLT_EPS 0.00001 // used for floats comparison
 #define SQR(X) ((X) * (X)) // square of X
 #define LEN(X) (sizeof(X)/sizeof(*X)) // ain't workin' in cuda;(
-
-
-enum Material {
-    air = 0,
-    iron,
-};
-
-enum TubeType {
-    Be_08 = 0,
-    Be_30,
-    Be_50,
-};
 
 
 // CUDA error check
