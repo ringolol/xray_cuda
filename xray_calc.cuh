@@ -67,32 +67,41 @@ __device__ float intersect(Block* blocks, int blocks_num, Beam beam) {
     return nu_L;
 }
 
-/**
-* Calcualte resulting x-ray image on the detector's matrix
-*/ 
-__global__ void calc_xray_image(float3 source, Block* blocks, int blocks_num, Matrix* matrix) {
+__device__ void calc_xray_group(float3 source, Block* blocks, int blocks_num, Matrix* matrix, int idX, int idY, float eps, float N0) {
+    float3 cell = matrix->cells[idX][idY];
+    Beam beam(source, cell, make_int2(idX, idY));
+    float nu_L = intersect(blocks, blocks_num, beam);
+    float Nklp = eps*N0*expf(-nu_L);
+    
+    // angle between the plane and the beam
+    // source: https://www.superprof.co.uk/resources/academic/maths/analytical-geometry/distance/angle-between-line-and-plane.html
+    float3 beam_vec = cell - source;
+    float3 cell_normal = make_float3(0,0,1);
+    float sina = fabsf(cell_normal * beam_vec) / (norm2(cell_normal) * norm2(beam_vec));
+    float dSp_s = SQR(matrix->density)*sina;
+
+    float N0klp = Nklp * dSp_s * SQR(100.0/beam.len) / (4.0*M_PI*SQR(beam.len));
+
+    matrix->image[idX][idY] = N0klp;
+}
+
+__device__ void calc_xray_image(float3 source, Block* blocks, int blocks_num, Matrix* matrix, int idX, int idY) {
     // temp values
     float eps = 0.25;
     float N0 = 1.885*powf(10.0, 10.0);
 
+    calc_xray_group(source, blocks, blocks_num, matrix, idX, idY, eps, N0);
+}
+
+/**
+* Calcualte resulting x-ray image on the detector's matrix
+*/ 
+__global__ void xray_image_kernel(float3 source, Block* blocks, int blocks_num, Matrix* matrix) {
     int idX = threadIdx.x+blockDim.x*blockIdx.x;
     int idY = threadIdx.y+blockDim.y*blockIdx.y;
+
     if(idX < matrix->width && idY < matrix->height) {
-        float3 cell = matrix->cells[idX][idY];
-        Beam beam(source, cell, make_int2(idX, idY));
-        float nu_L = intersect(blocks, blocks_num, beam);
-        float Nklp = eps*N0*expf(-nu_L);
-        
-        // angle between the plane and the beam
-        // source: https://www.superprof.co.uk/resources/academic/maths/analytical-geometry/distance/angle-between-line-and-plane.html
-        float3 beam_vec = matrix->cells[idX][idY]-source;
-        float3 cell_normal = make_float3(0,0,1);
-        float sina = fabsf(cell_normal * beam_vec) / (norm2(cell_normal) * norm2(beam_vec));
-        float dSp_s = SQR(matrix->density)*sina;
-
-        float N0klp = Nklp * dSp_s * SQR(100.0/beam.len) / (4.0*M_PI*SQR(beam.len));
-
-        matrix->image[idX][idY] = N0klp;
+        calc_xray_image(source, blocks, blocks_num, matrix, idX, idY);
     }
 }
 

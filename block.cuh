@@ -47,11 +47,13 @@ struct Plane {
 struct Block {
     Plane *planes;
     Material material;
+    float *mean_path;
     
-    __host__ void init(float3 points_[4], Material material_) {
+    __host__ void init(float3 points_[4], Material material_, float *mean_path_) {
         // a cuboid can be defined by 4 points and the material it
         // consists of
         material = material_;
+        mean_path = mean_path_;
 
         float3 points[7];
         // gpuErrchk( cudaMallocManaged(&points, 7*sizeof(float3)) );

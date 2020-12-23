@@ -8,6 +8,7 @@
 
 #include <math.h>
 #include <iostream>
+#include <vector>
 
 #include <cuda_profiler_api.h>
 
@@ -17,6 +18,7 @@
 #include "block.cuh"
 #include "f3_overload.cuh"
 #include "xray_calc.cuh"
+#include "settings.cuh"
 
 
 /*
@@ -24,17 +26,42 @@
 
     build:
         nvcc -o ./build/app.exe ./main.cu -arch=sm_61
+        nvcc -o ./build/cuda_xray.dll --shared ./main.cu -arch=sm_61
     run:
         nvprof ./build/app.exe
+        ./build/app.exe
     memory check (build with flags -G and -g):
         cuda-memcheck .\build\app.exe |more
 */
 
 
 int main() {
-    // load data
-    float *E=nullptr, *DQE=nullptr, *nuAir=nullptr, *nuIron=nullptr;
-    read_data("./data.txt", E, DQE, nuAir, nuIron);
+    // emulate input
+    TubeType tube_type = Be_50;
+    float volatage = 100.0;
+    float power = 1;
+    
+    Settings *settings;
+    cudaMallocManaged(&settings, 1*sizeof(Settings));
+    // load common data
+    settings->init(tube_type, volatage, power);
+
+    // load materials
+    std::vector<float> energy_vec, mean_path_vec;
+    read_data("./data/materials/G_Fe.txt", energy_vec, mean_path_vec);
+    float *Fe_x;
+    cudaMallocManaged(&Fe_x, mean_path_vec.size()*sizeof(float));
+    copy(mean_path_vec.begin(), mean_path_vec.end(), Fe_x);
+    // interpolate mean path for Fe
+    int k = 0;
+    for(int i = 0; i < 100; i++) {
+        while(settings->energy[i] >= energy_vec[k]) {
+            k++;
+        }
+        float mean_path_k = (mean_path_vec[k] - mean_path_vec[k-1]) / (energy_vec[k] - energy_vec[k-1]);
+        Fe_x[i] = mean_path_vec[k-1] + (settings->energy[i] - energy_vec[k-1]) * mean_path_k;
+        printf("%f %f\n", settings->energy[i], Fe_x[i]);
+    }
 
     // x-ray source
     float3 source = make_float3(0.0, 0.0, 0.0);
@@ -67,39 +94,39 @@ int main() {
     block1_points[1] = make_float3( p_hsize, -p_hsize, p_z);
     block1_points[2] = make_float3(-p_hsize,  p_hsize, p_z);
     block1_points[3] = make_float3(-p_hsize, -p_hsize, p_z-p1_thicc);
-    blocks[0].init(block1_points, iron);
+    blocks[0].init(block1_points, iron, Fe_x);
 
     // second layer with the hole
     block2_points[0] = make_float3(-p_hsize, -p_hsize, p_z-p1_thicc);
     block2_points[1] = make_float3(-hh,      -p_hsize, p_z-p1_thicc);
     block2_points[2] = make_float3(-p_hsize, p_hsize,  p_z-p1_thicc);
     block2_points[3] = make_float3(-p_hsize, -p_hsize, p_z-p1_thicc-hole_size);
-    blocks[1].init(block2_points, iron);
+    blocks[1].init(block2_points, iron, Fe_x);
 
     block3_points[0] = make_float3(hh,      -p_hsize, p_z-p1_thicc);
     block3_points[1] = make_float3(p_hsize, -p_hsize, p_z-p1_thicc);
     block3_points[2] = make_float3(hh,      p_hsize,  p_z-p1_thicc);
     block3_points[3] = make_float3(hh,      -p_hsize, p_z-p1_thicc-hole_size);
-    blocks[2].init(block3_points, iron);
+    blocks[2].init(block3_points, iron, Fe_x);
 
     block4_points[0] = make_float3(-hh, -p_hsize, p_z-p1_thicc);
     block4_points[1] = make_float3(hh,  -p_hsize, p_z-p1_thicc);
     block4_points[2] = make_float3(-hh, -hh,      p_z-p1_thicc);
     block4_points[3] = make_float3(-hh, -p_hsize, p_z-p1_thicc-hole_size);
-    blocks[3].init(block4_points, iron);
+    blocks[3].init(block4_points, iron, Fe_x);
 
     block5_points[0] = make_float3(-hh, hh,      p_z-p1_thicc);
     block5_points[1] = make_float3(hh,  hh,      p_z-p1_thicc);
     block5_points[2] = make_float3(-hh, p_hsize, p_z-p1_thicc);
     block5_points[3] = make_float3(-hh, hh,      p_z-p1_thicc-hole_size);
-    blocks[4].init(block5_points, iron);
+    blocks[4].init(block5_points, iron, Fe_x);
 
     // third layer
     block6_points[0] = make_float3(-p_hsize, -p_hsize, p_z-p1_thicc-hole_size);
     block6_points[1] = make_float3( p_hsize, -p_hsize, p_z-p1_thicc-hole_size);
     block6_points[2] = make_float3(-p_hsize,  p_hsize, p_z-p1_thicc-hole_size);
     block6_points[3] = make_float3(-p_hsize, -p_hsize, p_z-p1_thicc-hole_size-p2_thicc);
-    blocks[5].init(block6_points, iron);
+    blocks[5].init(block6_points, iron, Fe_x);
 
     // init matrix
     float matrix_width = 40;
@@ -116,7 +143,7 @@ int main() {
     dim3 blocksShape(blocks_width, blocks_height);
 
     // run kernel to calculate x-ray image
-    calc_xray_image<<<blocksShape, threadsPerBlock>>>(source, blocks, blocks_num, matrix);
+    xray_image_kernel<<<blocksShape, threadsPerBlock>>>(source, blocks, blocks_num, matrix);
 
     // wait for all threads and blocks
     cudaDeviceSynchronize();
