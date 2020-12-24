@@ -12,11 +12,14 @@
 #endif
 
 extern "C" CUDA_XRAY_DLL_API float** xray_image(
-    TubeType tube_type, 
-    float volatage, 
-    float power, 
-    float hole_size, 
-    float p1_thicc, 
+    TubeType tube_type,
+    float volatage,
+    float power,
+    float det_resolution,
+    float det_size,
+    float det_exposure,
+    float hole_size,
+    float p1_thicc,
     float p2_thicc
 );
 

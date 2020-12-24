@@ -4,6 +4,8 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
+#include "curand_kernel.h"
+
 #include "utils.cuh"
 #include "matrix.cuh"
 #include "beam.cuh"
@@ -81,29 +83,49 @@ __device__ void calc_xray_group(float3 source, Block* blocks, int blocks_num, Ma
     matrix->image[idX][idY] += Ii;
 }
 
-__device__ void calc_xray_image(float3 source, Block* blocks, int blocks_num, Matrix* matrix, Settings *settings, int idX, int idY) {
+__device__ void calc_xray_image(float3 source, Block* blocks, int blocks_num, Matrix* matrix, Settings *settings, curandState *global_state, int idX, int idY) {
     // temp values
     for(int energy_inx = 0; energy_inx < settings->voltage; energy_inx++) {
         // temp detector values
-        float epsi = 1.0;
-        float T = 1;
+        float epsi = 1;
+        float T = settings->exposure;
 
         float I0i = settings->flux * (settings->spectrum[energy_inx] / 100) * T * epsi;
 
         calc_xray_group(source, blocks, blocks_num, matrix, settings, idX, idY, I0i, energy_inx);
     }
+    float B = 0;//powf(10, -15);
+    float Nn = 5;
+    float Npi = matrix->image[idX][idY];
 
+
+    float mean = 0.0;
+    float std_dev = sqrtf(Npi + SQR(Nn)); // sqrtf(Npi + B * SQR(Npi) + SQR(Nn))
+    
+    long id = threadIdx.x + blockIdx.x * blockDim.x;
+    curandState local_state = global_state[id];
+    matrix->image[idX][idY] += (curand_normal(&local_state) + mean) * std_dev;
+    global_state[id] = local_state;
+}
+
+// https://stackoverflow.com/a/14291364/11162245
+__global__ void setup_curand(curandState *state)
+{
+    int id = threadIdx.x + blockIdx.x * blockDim.x;
+    /* Each thread gets different seed, a different sequence
+       number, no offset */
+    curand_init(7+id, id, 0, &state[id]);
 }
 
 /**
 * Calcualte resulting x-ray image on the detector's matrix
 */ 
-__global__ void xray_image_kernel(float3 source, Block* blocks, int blocks_num, Matrix* matrix, Settings *settings) {
+__global__ void xray_image_kernel(float3 source, Block* blocks, int blocks_num, Matrix* matrix, Settings *settings, curandState *global_state) {
     int idX = threadIdx.x+blockDim.x*blockIdx.x;
     int idY = threadIdx.y+blockDim.y*blockIdx.y;
 
     if(idX < matrix->width && idY < matrix->height) {
-        calc_xray_image(source, blocks, blocks_num, matrix, settings, idX, idY);
+        calc_xray_image(source, blocks, blocks_num, matrix, settings, global_state, idX, idY);
     }
 }
 

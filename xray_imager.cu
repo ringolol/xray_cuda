@@ -15,15 +15,16 @@
 #include "xray_imager.h"
 
 
-float** xray_image(TubeType tube_type, float volatage, float power, float hole_size, float p1_thicc, float p2_thicc) {
+float** xray_image(TubeType tube_type, float volatage, float power, float det_resolution, float det_size, float det_exposure, float hole_size, float p1_thicc, float p2_thicc) {
     Settings *settings;
     cudaMallocManaged(&settings, 1*sizeof(Settings));
     // load common data
-    settings->init(tube_type, volatage, power);
+    settings->init(tube_type, volatage, power, det_exposure);
 
     // load materials' data
     std::vector<float> energy_vec, mean_path_vec;
-    read_data("D:/Proj_One/GitSeparate/xray_cuda/data/materials/G_Fe.txt", energy_vec, mean_path_vec);
+    // D:/Proj_One/GitSeparate/xray_cuda
+    read_data("./data/materials/G_Fe.txt", energy_vec, mean_path_vec);
     float *Fe_x;
     cudaMallocManaged(&Fe_x, mean_path_vec.size()*sizeof(float));
     copy(mean_path_vec.begin(), mean_path_vec.end(), Fe_x);
@@ -101,9 +102,9 @@ float** xray_image(TubeType tube_type, float volatage, float power, float hole_s
     blocks[5].init(block6_points, iron, Fe_x);
 
     // init matrix
-    float matrix_width = 20;
-    int matrix_width_px = 1024;
-    int matrix_height_px = 1024;
+    float matrix_width = det_size;
+    int matrix_width_px = det_resolution;
+    int matrix_height_px = det_resolution;
     matrix->init(matrix_width_px, matrix_height_px, matrix_width/matrix_width_px, -90.0);
     printf("matrix size: %dx%d\n", matrix->width, matrix->height);
 
@@ -114,8 +115,12 @@ float** xray_image(TubeType tube_type, float volatage, float power, float hole_s
     int blocks_height = ceil((float)matrix_height_px/threads_size);
     dim3 blocksShape(blocks_width, blocks_height);
 
+    curandState *global_state;
+    cudaMallocManaged(&global_state, blocks_width*blocks_height*threads_size*threads_size*sizeof(curandState));
+    setup_curand<<<blocksShape, threadsPerBlock>>>(global_state);
+
     // run kernel to calculate x-ray image
-    xray_image_kernel<<<blocksShape, threadsPerBlock>>>(source, blocks, blocks_num, matrix, settings);
+    xray_image_kernel<<<blocksShape, threadsPerBlock>>>(source, blocks, blocks_num, matrix, settings, global_state);
 
     // wait for all threads and blocks
     cudaDeviceSynchronize();

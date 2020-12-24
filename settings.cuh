@@ -13,11 +13,13 @@ struct Settings {
     float *energy;
     float *spectrum;
     float flux;
+    float exposure;
 
-    __host__ void init(TubeType tube_, float voltage_, float power_) {
+    __host__ void init(TubeType tube_, float voltage_, float power_, float exposure_) {
         tube = tube_;
         voltage = voltage_;
         power = power_;
+        exposure = exposure_;
 
         std::string tube_str;
 
@@ -33,7 +35,8 @@ struct Settings {
                 break;
         }
         
-        std::string root_path = std::string("D:/Proj_One/GitSeparate/xray_cuda/data/tubes/X-Ray W11D ") + tube_str + "/";
+        // D:/Proj_One/GitSeparate/xray_cuda
+        std::string root_path = std::string("./data/tubes/X-Ray W11D ") + tube_str + "/";
         std::string flux_path = root_path + tube_str + " Fg 100 cm 1 kW.txt";
         std::string spectrum_path = root_path + "W11D " + std::to_string(int(voltage)) + " kV " + tube_str + ".txt";
         
@@ -52,7 +55,7 @@ struct Settings {
         flux = -1.0;
         for(int i = 0; i < energy_vec_fl.size(); i++) {
             if(abs(voltage - energy_vec_fl[i]) < FLT_EPS) {
-                flux = flux_vec[i];
+                flux = flux_vec[i] * power;
                 break;
             }
         }
