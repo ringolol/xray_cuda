@@ -12,4 +12,9 @@ enum TubeType {
     Be_50,
 };
 
+enum PartType {
+    PT_notch = 0,
+    PT_bubble,
+};
+
 #endif

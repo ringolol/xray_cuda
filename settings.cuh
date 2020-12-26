@@ -14,11 +14,15 @@ struct Settings {
     float *spectrum;
     float flux;
     float exposure;
+    float det_resolution;
+    float det_size;
 
-    __host__ void init(TubeType tube_, float voltage_, float power_, float exposure_) {
+    void init(TubeType tube_, float voltage_, float power_, float det_resolution_, float det_size_, float exposure_) {
         tube = tube_;
         voltage = voltage_;
         power = power_;
+        det_resolution = det_resolution_;
+        det_size = det_size_;
         exposure = exposure_;
 
         std::string tube_str;
@@ -60,7 +64,8 @@ struct Settings {
             }
         }
         if(abs(flux + 1.0) < FLT_EPS) {
-            throw "There is no appropriate value of flux for the given voltage.";
+            std::cerr << "There is no appropriate value of flux for the given voltage.\n";
+            throw "There is no appropriate value of flux for the given voltage.\n";
         }
     }
 };

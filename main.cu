@@ -26,7 +26,7 @@
 
     build:
         nvcc -o ./build/app.exe ./main.cu -arch=sm_61
-        nvcc -o ./dll/cudaXray.dll --shared ./xray_imager.cu -arch=sm_61
+        nvcc -o ./dll/cudaXray.dll --shared ./xray_imager.cu -arch=sm_61 -D CUDA_XRAY_DLL_LIB
     run:
         nvprof ./build/app.exe
         ./build/app.exe

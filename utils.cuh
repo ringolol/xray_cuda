@@ -28,13 +28,27 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 * Read data from a file
 */
 void read_data(std::string path, std::vector<float> &x_data, std::vector<float> &y_data) {
-    std::ifstream infile(path);
-    float xi, yi;
-
-    while (infile >> xi >> yi) {
-        x_data.push_back(xi);
-        y_data.push_back(yi);
+    std::ifstream infile;
+    infile.exceptions(std::ifstream::failbit);
+    
+    try {
+        infile.open(path, std::ifstream::in);
+        // infile.close();
+    } catch(std::ios_base::failure& fail) {
+        std::cerr << "Opening file '" << path 
+            << "' failed, it either doesn't exist or is not accessible.\n";
+        throw;
     }
+
+    try {
+        float xi, yi;
+
+        while (infile >> xi >> yi) {
+            x_data.push_back(xi);
+            y_data.push_back(yi);
+        }
+    } catch (...) {}
+    
 }
 
 #endif

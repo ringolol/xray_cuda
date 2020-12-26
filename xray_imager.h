@@ -18,9 +18,9 @@ extern "C" CUDA_XRAY_DLL_API float** xray_image(
     float det_resolution,
     float det_size,
     float det_exposure,
+    PartType part_type,
     float hole_size,
-    float p1_thicc,
-    float p2_thicc
+    float p1_thicc
 );
 
 #endif  // KERNEL_H
