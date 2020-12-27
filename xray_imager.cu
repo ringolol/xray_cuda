@@ -16,6 +16,21 @@
 #include "xray_imager.h"
 
 
+/*
+    CUDA commands.
+
+    build:
+        nvcc -o ./build/app.exe ./main.cu -arch=sm_61
+        nvcc -o ./dll/cudaXray.dll --shared ./xray_imager.cu -arch=sm_61 -D CUDA_XRAY_DLL_LIB
+    run:
+        nvprof ./build/app.exe
+        ./build/app.exe
+    memory check (build with flags -G and -g):
+        cuda-memcheck .\build\app.exe |more
+*/
+
+
+
 float* load_iron_data(Settings* settings) {
     // load materials' data
     std::vector<float> energy_vec, mean_path_vec;
