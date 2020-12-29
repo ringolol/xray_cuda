@@ -211,9 +211,6 @@ void store_output(Matrix* matrix) {
     outdata.close();
 }
 
-/**
- * 
- */
 float** xray_image(TubeType tube_type, float voltage, float power, float det_resolution, float det_size, float det_exposure, PartType part_type, float hole_size, float p_thicc) {
     printf("XI INIT\n");
     

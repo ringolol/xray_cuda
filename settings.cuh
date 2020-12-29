@@ -7,6 +7,10 @@
 #include "utils.cuh"
 
 
+/**
+ * X-ray imager setting
+ * @fields
+ */
 struct Settings {
     TubeType tube;
     float voltage, power;
@@ -17,7 +21,19 @@ struct Settings {
     float det_resolution;
     float det_size;
 
-    void init(TubeType tube_, float voltage_, float power_, float det_resolution_, float det_size_, float exposure_) {
+    /**
+     * Set settings
+     * @param tube_
+     * @param voltage_
+     * @param power_
+     * @param det_resolution_
+     * @param det_size_
+     * @param exposure_ 
+     * 
+     * @throw std::invalid_argument
+     * @throw std::ios_base::failure
+     */
+    __host__ void init(TubeType tube_, float voltage_, float power_, float det_resolution_, float det_size_, float exposure_) {
         tube = tube_;
         voltage = voltage_;
         power = power_;
@@ -39,7 +55,6 @@ struct Settings {
                 break;
         }
         
-        // D:/Proj_One/GitSeparate/xray_cuda
         std::string root_path = std::string("./data/tubes/X-Ray W11D ") + tube_str + "/";
         std::string flux_path = root_path + tube_str + " Fg 100 cm 1 kW.txt";
         std::string spectrum_path = root_path + "W11D " + std::to_string(int(voltage)) + " kV " + tube_str + ".txt";
@@ -65,9 +80,9 @@ struct Settings {
         }
         if(abs(flux + 1.0) < FLT_EPS) {
             std::cerr << "There is no appropriate value of flux for the given voltage.\n";
-            throw "There is no appropriate value of flux for the given voltage.\n";
+            throw std::invalid_argument("There is no appropriate value of flux for the given voltage.\n");
         }
     }
 };
 
-#endif
+#endif  // SETTINGS_CUH

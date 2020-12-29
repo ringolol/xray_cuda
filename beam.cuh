@@ -26,5 +26,5 @@ struct Beam {
     }
 };
 
-#endif
+#endif  // BEAM_CUH
 

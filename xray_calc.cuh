@@ -170,4 +170,4 @@ __global__ void xray_image_kernel(float3 source, Block* blocks, int blocks_num, 
     }
 }
 
-#endif
+#endif  // XRAY_CALC_CUH

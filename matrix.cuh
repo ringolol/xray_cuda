@@ -10,6 +10,13 @@ struct Matrix {
     float3 **cells;
     float **image;
 
+    /**
+     * Initialize detector's matrix (parallel to XOY plane)
+     * @param w matrix phisical width
+     * @param h matrix phisical height
+     * @param d pixels' density (number of pixels per cm)
+     * @param z Z coordinate of the detector
+     */
     __host__ void init(int w, int h, float d, float z) {
         width = w;
         height = h;
@@ -33,4 +40,4 @@ struct Matrix {
     }
 };
 
-#endif
+#endif  // MATRIX_CUH

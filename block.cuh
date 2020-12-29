@@ -12,6 +12,12 @@ struct Plane {
     float3 normal;
     float3 points[3];
 
+    /**
+     * Initialize the plane using three dots
+     * @param p0 the central point
+     * @param p1 first corner point
+     * @param p2 second corner point
+     */
     __host__ void init(float3 p0, float3 p1, float3 p2) {
         // p0 must be a central point!
         // p1 and p2 must be corner points
@@ -49,6 +55,12 @@ struct Block {
     Material material;
     float *mean_path;
     
+    /**
+     * Initialize the block (cuboid) using four points and material data
+     * @param points_ four points of the cuboid (in some particular order!)
+     * @param material material of the block (not in use)
+     * @param mean_path_ material physics
+     */
     __host__ void init(float3 points_[4], Material material_, float *mean_path_) {
         // a cuboid can be defined by 4 points and the material it
         // consists of
@@ -89,5 +101,5 @@ struct Block {
     
 };
 
-#endif
+#endif  // BLOCK_CUH
 

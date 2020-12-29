@@ -31,6 +31,8 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
  * @param path file path
  * @param x_data returned X-data
  * @param y_data returned Y-data
+ * 
+ * @throw std::ios_base::failure
 **/
 void read_data(std::string path, std::vector<float> &x_data, std::vector<float> &y_data) {
     std::ifstream infile;
@@ -38,7 +40,6 @@ void read_data(std::string path, std::vector<float> &x_data, std::vector<float> 
     
     try {
         infile.open(path, std::ifstream::in);
-        // infile.close();
     } catch(std::ios_base::failure& fail) {
         std::cerr << "Opening file '" << path 
             << "' failed, it either doesn't exist or is not accessible.\n";
@@ -53,7 +54,8 @@ void read_data(std::string path, std::vector<float> &x_data, std::vector<float> 
             y_data.push_back(yi);
         }
     } catch (...) {}
-    
+
+    infile.close();
 }
 
-#endif
+#endif  // UTILS_CUH

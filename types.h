@@ -43,4 +43,4 @@ enum PartType {
     PT_bubble,
 };
 
-#endif
+#endif  // TYPES_H

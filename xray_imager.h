@@ -22,6 +22,11 @@
  * @param part_type part type (either bubble or notch)
  * @param hole_size part hole (or notch) size [cm]
  * @param p_thicc part plate thickness [cm]
+ * 
+ * @return x-ray image (number of photons which hit each pixel of detector matrix)
+ * 
+ * @throw std::invalid_argument
+ * @throw std::ios_base::failure
  **/
 extern "C" CUDA_XRAY_DLL_API float** xray_image(
     TubeType tube_type,
