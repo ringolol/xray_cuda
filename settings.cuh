@@ -9,7 +9,6 @@
 
 /**
  * X-ray imager setting
- * @fields
  */
 struct Settings {
     TubeType tube;
@@ -43,6 +42,7 @@ struct Settings {
 
         std::string tube_str;
 
+        // this must be a separated function
         switch(tube) {
             case Be_08:
                 tube_str = "Be 0.8 mm";
@@ -78,7 +78,7 @@ struct Settings {
                 break;
             }
         }
-        if(abs(flux + 1.0) < FLT_EPS) {
+        if(abs(flux - (-1.0)) < FLT_EPS) {
             std::cerr << "There is no appropriate value of flux for the given voltage.\n";
             throw std::invalid_argument("There is no appropriate value of flux for the given voltage.\n");
         }

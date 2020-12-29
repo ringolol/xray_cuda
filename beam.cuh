@@ -22,7 +22,6 @@ struct Beam {
         // pars for intersection with planes
         l0 = p0;
         l = p1 - p0;
-        
     }
 };
 

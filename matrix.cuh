@@ -1,13 +1,27 @@
 #ifndef MATRIX_CUH
 #define MATRIX_CUH
 
-/**
-* X-ray detector's matrix
-*/
+
 struct Matrix {
-    int width, height;
+    /**
+     * The matrix width
+     */
+    int width;
+    /**
+     * The matrix height
+     */
+    int height;
+    /**
+     * The pixels' density (pixels per cm)
+     */
     float density;
+    /**
+     * The matrix itself represented as 3d points
+     */
     float3 **cells;
+    /**
+     * The image formed on the matrix by the x-rays
+     */
     float **image;
 
     /**
@@ -28,6 +42,7 @@ struct Matrix {
             cudaMallocManaged(&image[i], height*sizeof(float));
         }
         
+        // calculate pixel location from its index and matrix size
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
                 cells[i][j] = make_float3(
