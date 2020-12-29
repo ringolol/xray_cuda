@@ -5,4 +5,4 @@
 #define CUDA_KERNEL(...)
 #else
 #define CUDA_KERNEL(...) <<< __VA_ARGS__ >>>
-#endif
+#endif  // __INTELLISENSE__

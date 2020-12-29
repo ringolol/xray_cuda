@@ -1,9 +1,20 @@
+/**
+ * The CUDA x-ray demo dll which calculates an x-ray image.
+ *
+ * @author  Valeriy Lyubich
+ * @version 0.1
+ * @since   2020-12-29
+ */
+
 #pragma once
 
 #ifndef KERNEL_H
 #define KERNEL_H
 
-#include "types.h"
+
+#include "./utils/types.h"
+#include "./core/settings.h"
+
 
 #ifdef CUDA_XRAY_DLL_LIB
     #define CUDA_XRAY_DLL_API __declspec(dllexport)
@@ -29,12 +40,7 @@
  * @throw std::ios_base::failure
  **/
 extern "C" CUDA_XRAY_DLL_API float** xray_image(
-    TubeType tube_type,
-    float voltage,
-    float power,
-    float det_resolution,
-    float det_size,
-    float det_exposure,
+    Settings settings,
     PartType part_type,
     float hole_size,
     float p1_thicc

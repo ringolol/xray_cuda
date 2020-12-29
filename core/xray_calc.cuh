@@ -4,14 +4,14 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-#include "curand_kernel.h"
+#include <curand_kernel.h>
 
-#include "utils.cuh"
+#include "../utils/utils_host.h"
+#include "../utils/f3_overload.cuh"
 #include "matrix.cuh"
 #include "beam.cuh"
 #include "block.cuh"
-#include "f3_overload.cuh"
-#include "settings.cuh"
+#include "settings_device.cuh"
 
 
 /**
@@ -83,7 +83,7 @@ __device__ float intersect(Block* blocks, int blocks_num, Beam beam, int energy_
  * @param I0i number of quants which would hit detector (if there would be no obstacles)
  * @param energy_inx the current spectrum energy index
  */
-__device__ void calc_xray_group(float3 source, Block* blocks, int blocks_num, Matrix* matrix, Settings *settings, int idX, int idY, float I0i, int energy_inx) {
+__device__ void calc_xray_group(float3 source, Block* blocks, int blocks_num, Matrix* matrix, SettingsDevice *settings, int idX, int idY, float I0i, int energy_inx) {
     float3 cell = matrix->cells[idX][idY];
     Beam beam(source, cell, make_int2(idX, idY));
     float Ki = intersect(blocks, blocks_num, beam, energy_inx);
@@ -111,7 +111,7 @@ __device__ void calc_xray_group(float3 source, Block* blocks, int blocks_num, Ma
  * @param idX x-index of the matrix cell
  * @param idY y-index of the matrix cell
  */
-__device__ void calc_xray_image(float3 source, Block* blocks, int blocks_num, Matrix* matrix, Settings *settings, curandState *global_state, int idX, int idY) {
+__device__ void calc_xray_image(float3 source, Block* blocks, int blocks_num, Matrix* matrix, SettingsDevice *settings, curandState *global_state, int idX, int idY) {
     float T = settings->exposure;
     for(int energy_inx = 0; energy_inx < settings->voltage; energy_inx++) {
         // temp detector value!
@@ -161,7 +161,7 @@ __global__ void setup_curand(curandState *state)
  * @param settings x-ray imager settings
  * @param global_state cuRAND global state (is used for random noise generation)
  */ 
-__global__ void xray_image_kernel(float3 source, Block* blocks, int blocks_num, Matrix* matrix, Settings *settings, curandState *global_state) {
+__global__ void xray_image_kernel(float3 source, Block* blocks, int blocks_num, Matrix* matrix, SettingsDevice *settings, curandState *global_state) {
     int idX = threadIdx.x+blockDim.x*blockIdx.x;
     int idY = threadIdx.y+blockDim.y*blockIdx.y;
 

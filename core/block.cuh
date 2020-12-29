@@ -1,8 +1,8 @@
 #ifndef BLOCK_CUH
 #define BLOCK_CUH
 
-#include "utils.cuh"
-#include "f3_overload.cuh"
+
+#include "../utils/f3_overload.cuh"
 
 
 /**

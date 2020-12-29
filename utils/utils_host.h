@@ -1,30 +1,17 @@
-#ifndef UTILS_CUH
-#define UTILS_CUH
+#ifndef UTILS_HOST_H
+#define UTILS_HOST_H
+
 
 #include <string>
 #include <fstream>
+#include <iostream>
 #include <vector>
 
 #include "types.h"
 
-
 #define FLT_EPS 0.00001 // used for floats comparison
 #define SQR(X) ((X) * (X)) // square of X
 
-
-/** 
- * CUDA error check
- * @param ans a cuda function return
- */
-#define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
-inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
-{
-   if (code != cudaSuccess) 
-   {
-      fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
-      if (abort) exit(code);
-   }
-}
 
 /**
  * Read X-Y data from the file
@@ -58,4 +45,4 @@ void read_data(std::string path, std::vector<float> &x_data, std::vector<float> 
     infile.close();
 }
 
-#endif  // UTILS_CUH
+#endif  // UTILS_HOST_H

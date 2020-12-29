@@ -1,13 +1,12 @@
 /**
-* The CUDA x-ray demo dll which calculates an x-ray image.
-*
-* @author  Valeriy Lyubich
-* @version 0.1
-* @since   2020-12-29
-*/
+ * The CUDA x-ray demo dll which calculates an x-ray image.
+ *
+ * @author  Valeriy Lyubich
+ * @version 0.1
+ * @since   2020-12-29
+ */
 
-#include "cudaDmy.cuh"
-
+#include "xray_imager.h"
 #include <math.h>
 #include <iostream>
 #include <vector>
@@ -15,16 +14,15 @@
 #include <cuda_profiler_api.h>
 #include <thrust/device_vector.h>
 
-#include "utils.cuh"
-#include "matrix.cuh"
-#include "beam.cuh"
-#include "block.cuh"
-#include "f3_overload.cuh"
-#include "xray_calc.cuh"
-#include "settings.cuh"
-
-#include "xray_imager.h"
-
+#include "./utils/cudaDmy.cuh"
+#include "./utils/utils_host.h"
+#include "./utils/utils_device.cuh"
+#include "./utils/f3_overload.cuh"
+#include "./core/matrix.cuh"
+#include "./core/beam.cuh"
+#include "./core/block.cuh"
+#include "./core/xray_calc.cuh"
+#include "./core/settings_device.cuh"
 
 /*
     CUDA commands.
@@ -44,7 +42,7 @@
  * Load Fe data
  * @param settings x-ray imager settings
  */
-float* load_iron_data(Settings* settings) {
+float* load_iron_data(SettingsDevice* settings) {
     // load materials' data
     std::vector<float> energy_vec, mean_path_vec;
     read_data("./data/materials/G_Fe.txt", energy_vec, mean_path_vec);
@@ -71,7 +69,7 @@ float* load_iron_data(Settings* settings) {
  * @param hole_size size of the bubble
  * @param p_thicc thickness of the plate
  */
-void plate_with_holl(std::vector<Block> &blocks, Settings* settings, float hole_size, float p_thicc) {
+void plate_with_holl(std::vector<Block> &blocks, SettingsDevice* settings, float hole_size, float p_thicc) {
     // load material information
     // load Fe data
     float *Fe_x = load_iron_data(settings);
@@ -142,7 +140,7 @@ void plate_with_holl(std::vector<Block> &blocks, Settings* settings, float hole_
  * @param notch_depth depth of the notch
  * @param plate_thicc thickness of the plate
  */
-void plate_with_notch(std::vector<Block> &blocks, Settings* settings, float notch_size, float notch_depth, float plate_thicc) {
+void plate_with_notch(std::vector<Block> &blocks, SettingsDevice* settings, float notch_size, float notch_depth, float plate_thicc) {
     float *Fe_x = load_iron_data(settings);
 
     blocks.resize(3);
@@ -180,7 +178,7 @@ void plate_with_notch(std::vector<Block> &blocks, Settings* settings, float notc
  * Initializates sensor matrix
  * @param settings x-ray imager settings
  */
-Matrix* init_matrix(Settings* settings) {
+Matrix* init_matrix(SettingsDevice* settings) {
     Matrix* matrix;
     cudaMallocManaged(&matrix, 1*sizeof(Matrix));
 
@@ -211,18 +209,22 @@ void store_output(Matrix* matrix) {
     outdata.close();
 }
 
-float** xray_image(TubeType tube_type, float voltage, float power, float det_resolution, float det_size, float det_exposure, PartType part_type, float hole_size, float p_thicc) {
+float** xray_image(Settings settings_host, PartType part_type, float hole_size, float p_thicc) {
     printf("XI INIT\n");
     
     // settings
-    Settings *settings;
-    cudaMallocManaged(&settings, 1*sizeof(Settings));
-    try {
-        settings->init(tube_type, voltage, power, det_resolution, det_size, det_exposure);
-    } catch (...) {
-        std::cerr << "Error during settings init.\n";
-        return nullptr;
-    }
+    // Settings settings_host;
+    // // cudaMallocManaged(&settings, 1*sizeof(Settings));
+    // try {
+    //     settings_host.init(tube_type, voltage, power, det_resolution, det_size, det_exposure);
+    // } catch (...) {
+    //     std::cerr << "Error during settings init.\n";
+    //     return nullptr;
+    // }
+
+    SettingsDevice *settings;
+    cudaMallocManaged(&settings, 1*sizeof(SettingsDevice));
+    settings->init(settings_host);
 
     printf("SETTINGS SET\n");
 

@@ -1,7 +1,7 @@
 #ifndef BEAM_CUH
 #define BEAM_CUH
 
-#include "f3_overload.cuh"
+#include "../utils/f3_overload.cuh"
 
 
 /**

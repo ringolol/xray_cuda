@@ -1,8 +1,6 @@
 #ifndef F3_OVERLOAD_CUH
 #define F3_OVERLOAD_CUH
 
-#include "utils.cuh"
-
 
 /**
  * Sum of two vectors
