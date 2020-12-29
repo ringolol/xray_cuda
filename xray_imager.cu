@@ -1,3 +1,13 @@
+/**
+* The CUDA x-ray demo dll which calculates an x-ray image.
+*
+* @author  Valeriy Lyubich
+* @version 0.1
+* @since   2020-12-29
+*/
+
+#include "cudaDmy.cuh"
+
 #include <math.h>
 #include <iostream>
 #include <vector>
@@ -30,7 +40,10 @@
 */
 
 
-
+/**
+ * Load Fe data
+ * @param settings x-ray imager settings
+ */
 float* load_iron_data(Settings* settings) {
     // load materials' data
     std::vector<float> energy_vec, mean_path_vec;
@@ -51,7 +64,16 @@ float* load_iron_data(Settings* settings) {
     return Fe_x;
 }
 
+/**
+ * Creates a plate with a (cubic) bubble inside it
+ * @param blocks array of blocks representing the object in 3d space
+ * @param settings x-ray imager settings
+ * @param hole_size size of the bubble
+ * @param p_thicc thickness of the plate
+ */
 void plate_with_holl(std::vector<Block> &blocks, Settings* settings, float hole_size, float p_thicc) {
+    // load material information
+    // load Fe data
     float *Fe_x = load_iron_data(settings);
 
     float p1_thicc = (p_thicc-hole_size)/2;
@@ -112,6 +134,14 @@ void plate_with_holl(std::vector<Block> &blocks, Settings* settings, float hole_
     blocks[5].init(block6_points, iron, Fe_x);
 }
 
+/**
+ * Creates a plate with a notch
+ * @param blocks array of blocks representing the object in 3d space
+ * @param settings x-ray imager settings
+ * @param notch_size width of the notch
+ * @param notch_depth depth of the notch
+ * @param plate_thicc thickness of the plate
+ */
 void plate_with_notch(std::vector<Block> &blocks, Settings* settings, float notch_size, float notch_depth, float plate_thicc) {
     float *Fe_x = load_iron_data(settings);
 
@@ -146,6 +176,10 @@ void plate_with_notch(std::vector<Block> &blocks, Settings* settings, float notc
     blocks[2].init(block3_points, iron, Fe_x);
 }
 
+/**
+ * Initializates sensor matrix
+ * @param settings x-ray imager settings
+ */
 Matrix* init_matrix(Settings* settings) {
     Matrix* matrix;
     cudaMallocManaged(&matrix, 1*sizeof(Matrix));
@@ -159,6 +193,10 @@ Matrix* init_matrix(Settings* settings) {
     return matrix;
 }
 
+/**
+ * Save matrix output on the drive as output.txt
+ * @param matrix sensor matrix after image calculation
+ */
 void store_output(Matrix* matrix) {
     std::ofstream outdata("output.txt");
     for(int i = 0; i < matrix->width; i++) {
@@ -173,15 +211,17 @@ void store_output(Matrix* matrix) {
     outdata.close();
 }
 
-
-float** xray_image(TubeType tube_type, float volatage, float power, float det_resolution, float det_size, float det_exposure, PartType part_type, float hole_size, float p_thicc) {
+/**
+ * 
+ */
+float** xray_image(TubeType tube_type, float voltage, float power, float det_resolution, float det_size, float det_exposure, PartType part_type, float hole_size, float p_thicc) {
     printf("XI INIT\n");
     
     // settings
     Settings *settings;
     cudaMallocManaged(&settings, 1*sizeof(Settings));
     try {
-        settings->init(tube_type, volatage, power, det_resolution, det_size, det_exposure);
+        settings->init(tube_type, voltage, power, det_resolution, det_size, det_exposure);
     } catch (...) {
         std::cerr << "Error during settings init.\n";
         return nullptr;
@@ -221,12 +261,12 @@ float** xray_image(TubeType tube_type, float volatage, float power, float det_re
     // init cuRAND for noise calculation
     curandState *global_state;
     cudaMallocManaged(&global_state, blocks_width*blocks_height*threads_size*threads_size*sizeof(curandState));
-    setup_curand<<<blocksShape, threadsPerBlock>>>(global_state);
+    setup_curand CUDA_KERNEL(blocksShape, threadsPerBlock)(global_state);
 
     printf("STARTING KERNEL\n");
 
     // run kernel to calculate x-ray image
-    xray_image_kernel<<<blocksShape, threadsPerBlock>>>(source, blocks, blocks_vec.size(), matrix, settings, global_state);
+    xray_image_kernel CUDA_KERNEL(blocksShape, threadsPerBlock)(source, blocks, blocks_vec.size(), matrix, settings, global_state);
 
     // wait for all threads and blocks
     gpuErrchk( cudaDeviceSynchronize() );

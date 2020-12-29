@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "*.cuh": "cpp",
-        "*.cu": "cpp"
+        "*.cu": "cpp",
+        "vector": "cpp"
     }
 }

@@ -10,10 +10,12 @@
 
 #define FLT_EPS 0.00001 // used for floats comparison
 #define SQR(X) ((X) * (X)) // square of X
-#define LEN(X) (sizeof(X)/sizeof(*X)) // ain't workin' in cuda;(
 
 
-// CUDA error check
+/** 
+ * CUDA error check
+ * @param ans a cuda function return
+ */
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
 {
@@ -25,8 +27,11 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 }
 
 /**
-* Read data from a file
-*/
+ * Read X-Y data from the file
+ * @param path file path
+ * @param x_data returned X-data
+ * @param y_data returned Y-data
+**/
 void read_data(std::string path, std::vector<float> &x_data, std::vector<float> &y_data) {
     std::ifstream infile;
     infile.exceptions(std::ifstream::failbit);
