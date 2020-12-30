@@ -79,13 +79,7 @@ void plate_with_holl(std::vector<Block> &blocks, SettingsDevice* settings, float
     
     // allocate memorry in managed memory
     blocks.resize(6);
-    float3 *block1_points, *block2_points, *block3_points, *block4_points, *block5_points, *block6_points;
-    cudaMallocManaged(&block1_points, 4*sizeof(float3));
-    cudaMallocManaged(&block2_points, 4*sizeof(float3));
-    cudaMallocManaged(&block3_points, 4*sizeof(float3));
-    cudaMallocManaged(&block4_points, 4*sizeof(float3));
-    cudaMallocManaged(&block5_points, 4*sizeof(float3));
-    cudaMallocManaged(&block6_points, 4*sizeof(float3));
+    float3 block1_points[4], block2_points[4], block3_points[4], block4_points[4], block5_points[4], block6_points[4];
 
     // init blocks
     float p_hsize = 70; //4.5 (edge case)
@@ -144,10 +138,7 @@ void plate_with_notch(std::vector<Block> &blocks, SettingsDevice* settings, floa
     float *Fe_x = load_iron_data(settings);
 
     blocks.resize(3);
-    float3 *block1_points, *block2_points, *block3_points;
-    cudaMallocManaged(&block1_points, 4*sizeof(float3));
-    cudaMallocManaged(&block2_points, 4*sizeof(float3));
-    cudaMallocManaged(&block3_points, 4*sizeof(float3));
+    float3 block1_points[4], block2_points[4], block3_points[4];
 
     // init blocks
     float p_hsize = 70; //4.5 (edge case)

@@ -42,4 +42,6 @@ extern "C" CUDA_XRAY_DLL_API float** xray_image(
     float p1_thicc
 );
 
+// extern "C" CUDA_XRAY_DLL_API void free_image();
+
 #endif  // KERNEL_H
