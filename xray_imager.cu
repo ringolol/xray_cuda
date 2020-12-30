@@ -260,9 +260,7 @@ float** xray_image(Settings settings_host, PartType part_type, float hole_size, 
     gpuErrchk( cudaPeekAtLastError() );
 
     // free allocated memory
-    // cudaFree(blocks);
-    // cudaFree(block1_points);
-    // cudaFree(block2_points);
+    cudaFree(blocks);
     // cudaFree(matrix);
 
     cudaProfilerStop();
