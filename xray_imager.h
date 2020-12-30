@@ -12,6 +12,7 @@
 #define KERNEL_H
 
 
+#include "./utils/utils_host.h"
 #include "./utils/types.h"
 #include "./core/settings.h"
 
@@ -24,12 +25,7 @@
 
 /**
  * X-ray imager entry point, it is used for x-ray image calculation
- * @param tube_type x-ray source tube type
- * @param voltage x-ray accelerating voltage [kV]
- * @param power x-ray source power [kW]
- * @param det_resolution detector resolution [px]
- * @param det_size detector phisical size [cm]
- * @param det_exposure detector exposure [s]
+ * @param settings x-ray settings @see Settings
  * @param part_type part type (either bubble or notch)
  * @param hole_size part hole (or notch) size [cm]
  * @param p_thicc part plate thickness [cm]

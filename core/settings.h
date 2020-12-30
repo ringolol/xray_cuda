@@ -21,12 +21,12 @@ struct Settings {
 
     /**
      * Set settings
-     * @param tube_
-     * @param voltage_
-     * @param power_
-     * @param det_resolution_
-     * @param det_size_
-     * @param exposure_ 
+     * @param tube_ x-ray source tube type
+     * @param voltage_ x-ray accelerating voltage [kV]
+     * @param power_ x-ray source power [kW]
+     * @param det_resolution_ detector's resolution [px]
+     * @param det_size_ detector's phisical size [cm]
+     * @param exposure_ detector's exposure [s]
      * 
      * @throw std::invalid_argument
      * @throw std::ios_base::failure
@@ -35,6 +35,18 @@ struct Settings {
         init(tube_, voltage_, power_, det_resolution_, det_size_, exposure_);
     }
 
+    /**
+     * Set settings
+     * @param tube_ x-ray source tube type
+     * @param voltage_ x-ray accelerating voltage [kV]
+     * @param power_ x-ray source power [kW]
+     * @param det_resolution_ detector's resolution [px]
+     * @param det_size_ detector's phisical size [cm]
+     * @param exposure_ detector's exposure [s]
+     * 
+     * @throw std::invalid_argument
+     * @throw std::ios_base::failure
+     */
     void init(TubeType tube_, float voltage_, float power_, float det_resolution_, float det_size_, float exposure_) {
         tube = tube_;
         voltage = voltage_;

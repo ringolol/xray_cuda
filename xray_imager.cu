@@ -211,16 +211,6 @@ void store_output(Matrix* matrix) {
 
 float** xray_image(Settings settings_host, PartType part_type, float hole_size, float p_thicc) {
     printf("XI INIT\n");
-    
-    // settings
-    // Settings settings_host;
-    // // cudaMallocManaged(&settings, 1*sizeof(Settings));
-    // try {
-    //     settings_host.init(tube_type, voltage, power, det_resolution, det_size, det_exposure);
-    // } catch (...) {
-    //     std::cerr << "Error during settings init.\n";
-    //     return nullptr;
-    // }
 
     SettingsDevice *settings;
     cudaMallocManaged(&settings, 1*sizeof(SettingsDevice));

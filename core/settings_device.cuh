@@ -15,35 +15,25 @@ struct SettingsDevice : Settings {
     __host__ void init(Settings &s) {
         Settings::init(s.tube, s.voltage, s.power, s.det_resolution, s.det_size, s.exposure);
 
-        std::string tube_str;
-
-        // this must be a separated function
-        switch(tube) {
-            case Be_08:
-                tube_str = "Be 0.8 mm";
-                break;
-            case Be_30:
-                tube_str = "Be 3.0 mm";
-                break;
-            case Be_50:
-                tube_str = "Be 5.0 mm";
-                break;
-        }
-        
+        // file paths
+        std::string tube_str = tube2str(tube);
         std::string root_path = std::string("./data/tubes/X-Ray W11D ") + tube_str + "/";
         std::string flux_path = root_path + tube_str + " Fg 100 cm 1 kW.txt";
         std::string spectrum_path = root_path + "W11D " + std::to_string(int(voltage)) + " kV " + tube_str + ".txt";
         
+        // load spectrum and flux data
         std::vector<float> energy_vec, spectrum_vec;
         read_data(spectrum_path, energy_vec, spectrum_vec);
         std::vector<float> energy_vec_fl, flux_vec;
         read_data(flux_path, energy_vec_fl, flux_vec);
 
+        // move spectrum and energy from RAM to GPU memory
         cudaMallocManaged(&energy, energy_vec.size()*sizeof(float));
         cudaMallocManaged(&spectrum, energy_vec.size()*sizeof(float));
         copy(energy_vec.begin(), energy_vec.end(), energy);
         copy(spectrum_vec.begin(), spectrum_vec.end(), spectrum);
 
+        // find appropriate flux and scale it
         flux = -1.0;
         for(int i = 0; i < energy_vec_fl.size(); i++) {
             if(abs(voltage - energy_vec_fl[i]) < FLT_EPS) {

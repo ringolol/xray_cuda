@@ -17,17 +17,21 @@ enum Material {
  */
 enum TubeType {
     /**
+     * empty tube type
+     */
+    TT_none = 0,
+    /**
      * Be 8 mm
      */
-    Be_08 = 0,
+    TT_Be_08,
     /**
      * Be 30 mm
      */
-    Be_30,
+    TT_Be_30,
     /**
      * Be 50 mm
      */
-    Be_50,
+    TT_Be_50,
 };
 
 /**

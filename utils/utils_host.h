@@ -9,6 +9,7 @@
 
 #include "types.h"
 
+
 #define FLT_EPS 0.00001 // used for floats comparison
 #define SQR(X) ((X) * (X)) // square of X
 
@@ -43,6 +44,40 @@ void read_data(std::string path, std::vector<float> &x_data, std::vector<float> 
     } catch (...) {}
 
     infile.close();
+}
+
+std::string tube2str(TubeType tube) {
+    std::string tube_str;
+    switch(tube) {
+        case TT_Be_08:
+            return "Be 0.8 mm";
+        case TT_Be_30:
+            return "Be 3.0 mm";
+        case TT_Be_50:
+            return "Be 5.0 mm";
+    }
+}
+
+TubeType str2tube(std::string str) {
+    if(str == "Be 0.8 mm") {
+        return TT_Be_08;
+    } else if (str == "Be 3.0 mm") {
+        return TT_Be_30;
+    } else if (str == "Be 5.0 mm") {
+        return TT_Be_50;
+    } else {
+        return TT_none;
+    }
+}
+
+PartType str2part(std::string str) {
+    if(str == "notch") {
+        return PT_notch;
+    } else if(str == "bubble") {
+        return PT_bubble;
+    } else {
+        return PT_notch;
+    }
 }
 
 #endif  // UTILS_HOST_H
