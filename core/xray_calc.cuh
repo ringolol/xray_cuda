@@ -19,7 +19,7 @@
  * @param plane the plane to intersect
  * @param beam the beam to intersect
  */
-__device__ float3 intersect_plane(Plane plane, Beam beam) {
+__device__ float3 intersect_plane(Plane &plane, Beam &beam) {
     float d = (plane.points[0] - beam.l0) * plane.normal / (beam.l * plane.normal);
     float3 p = beam.l0 + beam.l*d;
     
@@ -43,7 +43,7 @@ __device__ float3 intersect_plane(Plane plane, Beam beam) {
  * @param beam the beam from source to the specific matrix pixel
  * @param energy_inx the current spectrum energy index
  */
-__device__ float intersect(Block* blocks, int blocks_num, Beam beam, int energy_inx) {
+__device__ float intersect(Block* blocks, int blocks_num, Beam &beam, int energy_inx) {
     float Ki = 0.0f;
 
     for(int i = 0; i < blocks_num; i++) {
@@ -52,14 +52,14 @@ __device__ float intersect(Block* blocks, int blocks_num, Beam beam, int energy_
         for(int j = 0; j < 6; j++) {
             float3 inter =  intersect_plane(blocks[i].planes[j], beam);
             
-            if(!isnan(inter.x)) {
+            if(!isnan(inter)) {
                 inters[ic] = inter;
                 ic++;
                 if(ic == 2) break;
             }
         }
         float l = 0.0;
-        if(!isnan(inters[0].x) && !isnan(inters[1].x) ) {
+        if(!isnan(inters[0]) && !isnan(inters[1]) ) {
             l = f3_dist(inters[0], inters[1]);
         } else {
             l = 0.0;

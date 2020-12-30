@@ -38,10 +38,13 @@ struct Plane {
 
     #ifdef __CUDA_ARCH__
         __device__ ~Plane() {
+            printf("plane destructor\n");
             delete[] points;
         }
     #else
         __host__ ~Plane() {
+            cudaDeviceSynchronize();
+            printf("plane destructor\n");
             cudaFree(points);
         }
     #endif
@@ -91,10 +94,13 @@ struct Block {
 
     #ifdef __CUDA_ARCH__
         __device__ ~Block() {
+            printf("block destructor\n");
             delete[] planes;
         }
     #else
         __host__ ~Block() {
+            cudaDeviceSynchronize();
+            printf("block destructor\n");
             cudaFree(planes);
         }
     #endif

@@ -35,13 +35,12 @@
  * @throw std::invalid_argument
  * @throw std::ios_base::failure
  **/
-extern "C" CUDA_XRAY_DLL_API float** xray_image(
+extern "C" CUDA_XRAY_DLL_API void xray_image(
     Settings settings,
     PartType part_type,
     float hole_size,
-    float p1_thicc
+    float p1_thicc,
+    float** image
 );
-
-// extern "C" CUDA_XRAY_DLL_API void free_image();
 
 #endif  // KERNEL_H

@@ -47,6 +47,13 @@ struct SettingsDevice : Settings {
             throw std::invalid_argument(msg);
         }
     }
+
+    __host__ ~SettingsDevice() {
+        cudaDeviceSynchronize();
+        printf("settingsDevice destructor\n");
+        cudaFree(energy);
+        cudaFree(spectrum);
+    }
 };
 
 #endif  // SETTINGS_DEVICE_CUH

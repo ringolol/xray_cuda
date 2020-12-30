@@ -86,5 +86,9 @@ __device__ __host__ float3 nanf3() {
     return float3(make_float3(nanf(""), nanf(""), nanf("")));
 }
 
+__device__ __host__ bool isnan(float3 a) {
+    return isnan(a.x) || isnan(a.y) || isnan(a.z);
+}
+
 #endif  // F3_OVERLOAD_CUH
 

@@ -5,8 +5,9 @@
  * @version 0.1
  * @since   2020-12-29
  */
-
+#ifndef BUILD_APP
 #include "xray_imager.h"
+#endif  // BUILD_APP
 #include <math.h>
 #include <iostream>
 #include <vector>
@@ -28,7 +29,7 @@
     CUDA commands.
 
     build:
-        nvcc -o ./build/app.exe ./main.cu -arch=sm_61
+        nvcc -o ./build/app.exe ./xray_imager.cu -arch=sm_61 -D BUILD_APP
         nvcc -o ./dll/cudaXray.dll --shared ./xray_imager.cu -arch=sm_61 -D CUDA_XRAY_DLL_LIB
     run:
         nvprof ./build/app.exe
@@ -166,7 +167,7 @@ void plate_with_notch(std::vector<Block> &blocks, SettingsDevice* settings, floa
 }
 
 /**
- * Initializates sensor matrix
+ * Initialize sensor matrix
  * @param settings x-ray imager settings
  */
 Matrix* init_matrix(SettingsDevice* settings) {
@@ -200,7 +201,7 @@ void store_output(Matrix* matrix) {
     outdata.close();
 }
 
-float** xray_image(Settings settings_host, PartType part_type, float hole_size, float p_thicc) {
+void xray_image(Settings settings_host, PartType part_type, float hole_size, float p_thicc, float** image) {
     printf("XI INIT\n");
 
     SettingsDevice *settings;
@@ -256,16 +257,38 @@ float** xray_image(Settings settings_host, PartType part_type, float hole_size, 
     // store matrix as output.txt
     store_output(matrix);
 
-    // print errors
-    gpuErrchk( cudaPeekAtLastError() );
+    // copy cuda image to ram image
+    for(int i = 0; i < matrix->width; i++) {
+        for(int j = 0; j < matrix->height; j++) {
+            image[i][j] = matrix->image[i][j];
+        }
+    }
 
     // free allocated memory
-    cudaFree(blocks);
-    // cudaFree(matrix);
-
-    cudaProfilerStop();
+    cudaDeviceReset();
 
     printf("XI STOPPED\n");
-
-    return matrix->image;
 }
+
+#ifdef BUILD_APP
+int main() {
+    float **image = new float*[1024];
+    for(int i = 0; i < 1024; i++) {
+        image[i] = new float[1024];
+    }
+
+    Settings settings(
+        TT_Be_08,
+        100.,
+        1.,
+        1024,
+        20.,
+        1.
+    );
+    while(true) {
+        std::string str;
+        std::cin >> str;
+        xray_image(settings, PT_notch, 0.1, 2, image);
+    }
+}
+#endif  // BUILD_APP

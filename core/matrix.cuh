@@ -53,6 +53,17 @@ struct Matrix {
             }
         }
     }
+
+    __host__ ~Matrix() {
+        cudaDeviceSynchronize();
+        printf("matrix destructor\n");
+        for(int i = 0; i < width; i++) {
+            cudaFree(cells[i]);
+            cudaFree(image[i]);
+        }
+        cudaFree(cells);
+        cudaFree(image);
+    }
 };
 
 #endif  // MATRIX_CUH

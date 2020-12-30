@@ -56,6 +56,7 @@ std::string tube2str(TubeType tube) {
         case TT_Be_50:
             return "Be 5.0 mm";
     }
+    return "";
 }
 
 TubeType str2tube(std::string str) {
@@ -65,9 +66,8 @@ TubeType str2tube(std::string str) {
         return TT_Be_30;
     } else if (str == "Be 5.0 mm") {
         return TT_Be_50;
-    } else {
-        return TT_none;
     }
+    return TT_none;
 }
 
 PartType str2part(std::string str) {
@@ -75,9 +75,8 @@ PartType str2part(std::string str) {
         return PT_notch;
     } else if(str == "bubble") {
         return PT_bubble;
-    } else {
-        return PT_notch;
     }
+    return PT_notch;
 }
 
 #endif  // UTILS_HOST_H
